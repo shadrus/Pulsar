@@ -1,0 +1,13 @@
+---
+log_level: "debug"
+certificate_config:
+  - endpoint: "ya.ru"
+    interval: 10
+    days_for_warn: 3
+http_config:
+  - endpoint: "https://yandex.ru"
+    headers:
+      Awasome-Header: something
+    interval: 20
+    method: GET
+    success_status: 200
