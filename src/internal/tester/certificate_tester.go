@@ -1,6 +1,7 @@
 package tester
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"net/url"
@@ -50,19 +51,26 @@ func (h CertificateTester) Validate() error {
 
 func (h CertificateTester) Test() (TestResult, error) {
 	testResult := CertificateTestResult{Configuration: h.config, Success: false}
-	conn, err := tls.Dial("tcp", fmt.Sprintf("%s:443", h.config.Endpoint), nil)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	d := tls.Dialer{
+		Config: nil,
+	}
+	conn, err := d.DialContext(ctx, "tcp", fmt.Sprintf("%s:443", h.config.Endpoint))
 	if err != nil {
 		log.Warning(err)
 		h.resultsChannel <- testResult
 		return testResult, err
 	}
-	err = conn.VerifyHostname(h.config.Endpoint)
+	defer conn.Close()
+	tlsConn := conn.(*tls.Conn)
+	err = tlsConn.VerifyHostname(h.config.Endpoint)
 	if err != nil {
 		log.Warning(err)
 		h.resultsChannel <- testResult
 		return testResult, err
 	}
-	expiry := conn.ConnectionState().PeerCertificates[0].NotAfter
+	expiry := tlsConn.ConnectionState().PeerCertificates[0].NotAfter
 	timeDiff := time.Until(expiry)
 	daysToExpire := timeDiff.Hours() / 24
 	testResult.DaysToExpire = daysToExpire

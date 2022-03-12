@@ -1,13 +1,20 @@
 package main
 
 import (
+	"flag"
+	log "github.com/sirupsen/logrus"
 	"tester/src/config"
 	"tester/src/internal/metrics"
 	"tester/src/internal/scheduler"
 	"tester/src/internal/tester"
-
-	log "github.com/sirupsen/logrus"
 )
+
+var configFile string
+
+func init() {
+	flag.StringVar(&configFile, "config", "config.yml", "config filename")
+	flag.Parse()
+}
 
 func main() {
 	resultChan := make(chan tester.TestResult)
@@ -18,7 +25,7 @@ func main() {
 		FullTimestamp:  true,
 		DisableSorting: false,
 	})
-	configuration := config.LoadConfiguration("config.yml")
+	configuration := config.LoadConfiguration(configFile)
 	log.SetLevel(configuration.GetLogLevel())
 	log.Info("Starting tester...")
 	log.Debug(configuration)
