@@ -1,11 +1,12 @@
 package main
 
 import (
-	log "github.com/sirupsen/logrus"
 	"tester/src/config"
 	"tester/src/internal/metrics"
 	"tester/src/internal/scheduler"
 	"tester/src/internal/tester"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func main() {

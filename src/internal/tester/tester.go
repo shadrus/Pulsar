@@ -17,8 +17,6 @@ type TestResult interface {
 	GetConfig() config.Configurator
 }
 
-
-
 func NewTester(configuration config.Configurator, resultsChannel chan TestResult) (Tester, error) {
 	var tester Tester
 	switch conf := configuration.(type) {

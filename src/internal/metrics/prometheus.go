@@ -1,13 +1,14 @@
 package metrics
 
 import (
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	log "github.com/sirupsen/logrus"
 	"net/http"
 	"strconv"
 	"tester/src/config"
 	"tester/src/internal/tester"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -31,14 +32,12 @@ var (
 )
 
 func serveHttpTestResults(conf config.HttpTesterConfig, result tester.TestResult) {
-	var httpResult tester.HttpTestResult
-	httpResult = result.(tester.HttpTestResult)
+	httpResult := result.(tester.HttpTestResult)
 	httpTest.WithLabelValues(conf.Endpoint, strconv.FormatBool(result.WasSuccessful()), strconv.Itoa(httpResult.ResponseStatus)).Observe(httpResult.TestDuration.Seconds())
 }
 
 func serveCertificateTestResults(conf config.CertificateTesterConfig, result tester.TestResult) {
-	var certificateTestResult tester.CertificateTestResult
-	certificateTestResult = result.(tester.CertificateTestResult)
+	certificateTestResult := result.(tester.CertificateTestResult)
 	certTest.WithLabelValues(conf.Endpoint, strconv.FormatBool(result.WasSuccessful())).Set(certificateTestResult.DaysToExpire)
 }
 

@@ -2,12 +2,13 @@ package tester
 
 import (
 	"context"
-	log "github.com/sirupsen/logrus"
 	"io"
 	"net/http"
 	"net/url"
 	"tester/src/config"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type HttpTestResult struct {

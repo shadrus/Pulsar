@@ -1,13 +1,14 @@
 package scheduler
 
 import (
-	"github.com/go-co-op/gocron"
 	"tester/src/config"
 	"tester/src/internal/tester"
 	"time"
+
+	"github.com/go-co-op/gocron"
 )
 
-func startJob(configuration config.Configurator, resultsChannel chan tester.TestResult, scheduler *gocron.Scheduler)  {
+func startJob(configuration config.Configurator, resultsChannel chan tester.TestResult, scheduler *gocron.Scheduler) {
 	test, err := tester.NewTester(configuration, resultsChannel)
 	if err != nil {
 		panic(err.Error())

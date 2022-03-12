@@ -2,12 +2,12 @@ package tester
 
 import (
 	"crypto/tls"
-	"errors"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"net/url"
 	"tester/src/config"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type CertificateTestResult struct {
@@ -31,11 +31,11 @@ type CertificateTester struct {
 
 func (h CertificateTester) validateEndpoint() error {
 	u, err := url.Parse(h.config.Endpoint)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 	if u.Path == "" {
-		return errors.New(fmt.Sprintf("Wrong certificate url: %s. It mst be like domain.com", h.config.Endpoint))
+		return fmt.Errorf("wrong certificate url: %s. It mst be like domain.com", h.config.Endpoint)
 	}
 	return nil
 }
@@ -59,7 +59,7 @@ func (h CertificateTester) Test() (TestResult, error) {
 		return testResult, err
 	}
 	expiry := conn.ConnectionState().PeerCertificates[0].NotAfter
-	timeDiff := expiry.Sub(time.Now())
+	timeDiff := time.Until(expiry)
 	daysToExpire := timeDiff.Hours() / 24
 	testResult.DaysToExpire = daysToExpire
 	if int(daysToExpire) > h.config.DaysForWarn {
