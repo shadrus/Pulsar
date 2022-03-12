@@ -29,6 +29,10 @@ type CertificateTester struct {
 	resultsChannel chan TestResult
 }
 
+func NewCertificateTester(config config.CertificateTesterConfig, resultsChannel chan TestResult) *CertificateTester {
+	return &CertificateTester{config: config, resultsChannel: resultsChannel}
+}
+
 func (h CertificateTester) validateEndpoint() error {
 	u, err := url.Parse(h.config.Endpoint)
 	if err != nil {

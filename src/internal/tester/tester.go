@@ -21,9 +21,9 @@ func NewTester(configuration config.Configurator, resultsChannel chan TestResult
 	var tester Tester
 	switch conf := configuration.(type) {
 	case config.HttpTesterConfig:
-		tester = HttpTester{config: conf, resultsChannel: resultsChannel}
+		tester = NewHttpTester(conf, resultsChannel)
 	case config.CertificateTesterConfig:
-		tester = CertificateTester{config: conf, resultsChannel: resultsChannel}
+		tester = NewCertificateTester(conf, resultsChannel)
 	default:
 		return nil, errors.New("unknown tester type")
 	}

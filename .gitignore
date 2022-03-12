@@ -3,3 +3,4 @@
 config_real.yml
 launch.json
 /vscode/
+*.exe
