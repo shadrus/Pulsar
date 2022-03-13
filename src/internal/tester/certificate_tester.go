@@ -35,12 +35,12 @@ func NewCertificateTester(config config.CertificateTesterConfig, resultsChannel 
 }
 
 func (h CertificateTester) validateEndpoint() error {
-	u, err := url.Parse(h.config.Endpoint)
+	u, err := url.Parse(h.config.GetEndpoint())
 	if err != nil {
 		return err
 	}
 	if u.Path == "" {
-		return fmt.Errorf("wrong certificate url: %s. It mst be like domain.com", h.config.Endpoint)
+		return fmt.Errorf("wrong certificate url: %s. It mst be like domain.com", h.config.GetEndpoint())
 	}
 	return nil
 }
@@ -51,12 +51,12 @@ func (h CertificateTester) Validate() error {
 
 func (h CertificateTester) Test() (TestResult, error) {
 	testResult := CertificateTestResult{Configuration: h.config, Success: false}
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(h.config.GetTimeout())*time.Second)
 	defer cancel()
 	d := tls.Dialer{
 		Config: nil,
 	}
-	conn, err := d.DialContext(ctx, "tcp", fmt.Sprintf("%s:443", h.config.Endpoint))
+	conn, err := d.DialContext(ctx, "tcp", fmt.Sprintf("%s:443", h.config.GetEndpoint()))
 	if err != nil {
 		log.Warning(err)
 		h.resultsChannel <- testResult
@@ -64,7 +64,7 @@ func (h CertificateTester) Test() (TestResult, error) {
 	}
 	defer conn.Close()
 	tlsConn := conn.(*tls.Conn)
-	err = tlsConn.VerifyHostname(h.config.Endpoint)
+	err = tlsConn.VerifyHostname(h.config.GetEndpoint())
 	if err != nil {
 		log.Warning(err)
 		h.resultsChannel <- testResult
