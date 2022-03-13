@@ -46,12 +46,12 @@ func (h HttpTester) validateEndpoint(endpoint string) error {
 }
 
 func (h HttpTester) Validate() error {
-	return h.validateEndpoint(h.config.Endpoint)
+	return h.validateEndpoint(h.config.GetEndpoint())
 }
 
 func (h HttpTester) testHttp() (TestResult, error) {
 	testResult := HttpTestResult{Configuration: h.config, Success: false}
-	req, err := http.NewRequest(h.config.Method, h.config.Endpoint, nil)
+	req, err := http.NewRequest(h.config.Method, h.config.GetEndpoint(), nil)
 	if err != nil {
 		return testResult, err
 	}
@@ -60,7 +60,7 @@ func (h HttpTester) testHttp() (TestResult, error) {
 	}
 	t1 := time.Now()
 	//TODO timeout from config
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(h.config.GetTimeout()))
 	defer cancel()
 	req = req.WithContext(ctx)
 	resp, err := h.client.Do(req)

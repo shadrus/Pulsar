@@ -10,6 +10,8 @@ import (
 
 type Configurator interface {
 	GetInterval() int
+	GetTimeout() int
+	GetEndpoint() string
 }
 
 type Config struct {
@@ -26,26 +28,34 @@ func (c Config) GetLogLevel() logrus.Level {
 	return level
 }
 
+type CommonConfig struct {
+	Endpoint string `yaml:"endpoint"`
+	Interval int    `yaml:"interval"`
+	Timeout  int    `yaml:"timeout"`
+}
+
+func (t CommonConfig) GetInterval() int {
+	return t.Interval
+}
+
+func (t CommonConfig) GetTimeout() int {
+	return t.Timeout
+}
+
+func (t CommonConfig) GetEndpoint() string {
+	return t.Endpoint
+}
+
 type HttpTesterConfig struct {
-	Endpoint      string            `yaml:"endpoint"`
-	Interval      int               `yaml:"interval"`
+	CommonConfig  `yaml:"target"`
 	Method        string            `yaml:"method"`
 	SuccessStatus int               `yaml:"success_status"`
 	Headers       map[string]string `yaml:"headers"`
 }
 
-func (t HttpTesterConfig) GetInterval() int {
-	return t.Interval
-}
-
 type CertificateTesterConfig struct {
-	Endpoint    string `yaml:"endpoint"`
-	Interval    int    `yaml:"interval"`
-	DaysForWarn int    `yaml:"days_for_warn"`
-}
-
-func (t CertificateTesterConfig) GetInterval() int {
-	return t.Interval
+	CommonConfig `yaml:"target"`
+	DaysForWarn  int `yaml:"days_for_warn"`
 }
 
 func LoadConfiguration(filePath string) *Config {
