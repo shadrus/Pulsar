@@ -17,14 +17,14 @@ var (
 	// differentiated via a "service" label.
 	httpTest = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
-			Name: "site360_http_request_seconds",
+			Name: "pulsar_http_request_seconds",
 			Help: "Time to get response from the endpoint in seconds",
 		},
 		[]string{"endpoint", "success", "status"},
 	)
 	certTest = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Name: "site360_days_to_expire_cert",
+			Name: "pulsar_days_to_expire_cert",
 			Help: "Day left to expire certificate",
 		},
 		[]string{"endpoint", "success"},
