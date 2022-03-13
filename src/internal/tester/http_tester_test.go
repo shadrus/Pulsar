@@ -62,7 +62,9 @@ func (r MockSlowHttpTesterClient) Do(req *http.Request) (*http.Response, error) 
 func Test(t *testing.T) {
 	resultChan := make(chan TestResult)
 	headers := make(map[string]string)
-	config := config.HttpTesterConfig{Endpoint: "ya.ru", Interval: 10, Method: "get", SuccessStatus: 200, Headers: headers}
+	target := config.CommonConfig{Endpoint: "ya.ru", Interval: 10, Timeout: 20}
+	config := config.HttpTesterConfig{Method: "get", SuccessStatus: 200, Headers: headers}
+	config.CommonConfig = target
 	tests := []struct {
 		name    string
 		h       HttpTester
