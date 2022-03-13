@@ -1,3 +1,4 @@
+// package metrics converts different tests results to Prometheus metrics
 package metrics
 
 import (
@@ -12,9 +13,8 @@ import (
 )
 
 var (
-	// Create a summary to track fictional interservice RPC latencies for three
-	// distinct services with different latency distributions. These services are
-	// differentiated via a "service" label.
+	// httpTest is Summary type metric.
+	// It provides info from http tests.
 	httpTest = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
 			Name: "pulsar_http_request_seconds",
@@ -22,6 +22,8 @@ var (
 		},
 		[]string{"endpoint", "success", "status"},
 	)
+	// httpTest is Gauge type metric.
+	// It provides info from certificate validity test.
 	certTest = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "pulsar_days_to_expire_cert",
@@ -41,6 +43,7 @@ func serveCertificateTestResults(conf config.CertificateTesterConfig, result tes
 	certTest.WithLabelValues(conf.Endpoint, strconv.FormatBool(result.WasSuccessful())).Set(certificateTestResult.DaysToExpire)
 }
 
+// serveTestResults decides what metric must be updates based on test configuration
 func serveTestResults(resultsChannel <-chan tester.TestResult) {
 	for result := range resultsChannel {
 		log.Debugf("Got results %v", result)
@@ -56,12 +59,14 @@ func serveTestResults(resultsChannel <-chan tester.TestResult) {
 	}
 }
 
+// StartPrometheus creates job for gather test results and exposes metrics endpoint
 func StartPrometheus(resultsChannel <-chan tester.TestResult) {
 	prometheus.MustRegister(httpTest)
 	prometheus.MustRegister(certTest)
 	http.Handle("/metrics", promhttp.HandlerFor(
 		prometheus.DefaultGatherer,
 		promhttp.HandlerOpts{
+			// TODO must be based on config
 			// Opt into OpenMetrics to support exemplars.
 			EnableOpenMetrics: true,
 		},
