@@ -2,9 +2,9 @@ package tester
 
 import (
 	"bytes"
+	"errors"
 	"io/ioutil"
 	"net/http"
-	"reflect"
 	"tester/src/config"
 	"testing"
 )
@@ -49,21 +49,35 @@ func TestHttpTester_validateEndpoint(t *testing.T) {
 	}
 }
 
-type MockSlowHttpTesterClient struct {
-}
+type MockHttpTesterClient struct{}
 
-func (r MockSlowHttpTesterClient) Do(req *http.Request) (*http.Response, error) {
+func (r MockHttpTesterClient) Do(req *http.Request) (*http.Response, error) {
 	json := `{"name":"Test Name","full_name":"test full name","owner":{"login": "octocat"}}`
 	// create a new reader with that JSON
 	respData := ioutil.NopCloser(bytes.NewReader([]byte(json)))
 	return &http.Response{StatusCode: 200, Body: respData}, nil
 }
 
+type BadStatusMockHttpTesterClient struct{}
+
+func (r BadStatusMockHttpTesterClient) Do(req *http.Request) (*http.Response, error) {
+	json := `{"name":"Test Name","full_name":"test full name","owner":{"login": "octocat"}}`
+	// create a new reader with that JSON
+	respData := ioutil.NopCloser(bytes.NewReader([]byte(json)))
+	return &http.Response{StatusCode: 203, Body: respData}, nil
+}
+
+type ErrorMockHttpTesterClient struct{}
+
+func (r ErrorMockHttpTesterClient) Do(req *http.Request) (*http.Response, error) {
+	return &http.Response{}, errors.New("Timeout")
+}
+
 func Test(t *testing.T) {
 	resultChan := make(chan TestResult)
 	defer close(resultChan)
 	headers := make(map[string]string)
-	target := config.CommonConfig{Endpoint: "ya.ru", Interval: 10, Timeout: 20}
+	target := config.CommonConfig{Endpoint: "ya.ru", Interval: 10, Timeout: 5}
 	config := config.HttpTesterConfig{Method: "get", SuccessStatus: 200, Headers: headers}
 	config.CommonConfig = target
 	tests := []struct {
@@ -72,18 +86,22 @@ func Test(t *testing.T) {
 		want    TestResult
 		wantErr bool
 	}{
-		{"SlowHttpClient", HttpTester{config: config, resultsChannel: resultChan, client: MockSlowHttpTesterClient{}}, HttpTestResult{Success: true, TestDuration: 0, Configuration: config, ResponseStatus: 200}, false},
+		{"HttpClient good request", HttpTester{config: config, resultsChannel: resultChan, client: MockHttpTesterClient{}}, HttpTestResult{Success: true, TestDuration: 0, Configuration: config, ResponseStatus: 200}, false},
+		{"HttpClient wrong response code", HttpTester{config: config, resultsChannel: resultChan, client: BadStatusMockHttpTesterClient{}}, HttpTestResult{Success: false, TestDuration: 0, Configuration: config, ResponseStatus: 203}, false},
+		{"HttpClient error on Do request", HttpTester{config: config, resultsChannel: resultChan, client: ErrorMockHttpTesterClient{}}, HttpTestResult{Success: false, Configuration: config}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.h.testHttp()
+			result, err := tt.h.testHttp()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("HttpTester.Test() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				//t.Errorf("HttpTester.Test() = %v, want %v", got, tt.want)
+			if result.WasSuccessful() != tt.want.WasSuccessful() {
+				t.Errorf("HttpTester.Test() Success = %v, want %v", result.WasSuccessful(), tt.want.WasSuccessful())
+				return
 			}
+
 		})
 	}
 }
