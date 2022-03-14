@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"tester/src/config"
 	"time"
 
@@ -49,6 +50,14 @@ func (h HttpTester) Validate() error {
 	return h.validateEndpoint(h.config.GetEndpoint())
 }
 
+func testResponseBody(body string, checkString string) bool {
+	if checkString == "" {
+		return true
+	} else {
+		return strings.Contains(body, checkString)
+	}
+}
+
 func (h HttpTester) testHttp() (TestResult, error) {
 	testResult := HttpTestResult{Configuration: h.config, Success: false}
 	req, err := http.NewRequest(h.config.Method, h.config.GetEndpoint(), nil)
@@ -76,7 +85,8 @@ func (h HttpTester) testHttp() (TestResult, error) {
 		}
 		bodyString := string(bodyBytes)
 		log.Debug(bodyString)
-		if resp.StatusCode == h.config.SuccessStatus {
+		// test if we have valid response status code and test string from config is in response body
+		if resp.StatusCode == h.config.SuccessStatus && testResponseBody(bodyString, h.config.CheckText) {
 			testResult.Success = true
 		}
 	}

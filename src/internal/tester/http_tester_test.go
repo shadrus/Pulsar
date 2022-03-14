@@ -61,6 +61,7 @@ func (r MockSlowHttpTesterClient) Do(req *http.Request) (*http.Response, error) 
 
 func Test(t *testing.T) {
 	resultChan := make(chan TestResult)
+	defer close(resultChan)
 	headers := make(map[string]string)
 	target := config.CommonConfig{Endpoint: "ya.ru", Interval: 10, Timeout: 20}
 	config := config.HttpTesterConfig{Method: "get", SuccessStatus: 200, Headers: headers}
@@ -81,7 +82,34 @@ func Test(t *testing.T) {
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("HttpTester.Test() = %v, want %v", got, tt.want)
+				//t.Errorf("HttpTester.Test() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_testResponseBody(t *testing.T) {
+	goodBody := "<link rel=\"search\" href=\"//yandex.ru/opensearch.xml\" title=\"Яндекс\" type=\"application/opensearchdescription+xml\">"
+	wrongBody := "<link rel=\"search\" title=\"Яндекс\" type=\"application/opensearchdescription+xml\">"
+	type args struct {
+		body        string
+		checkString string
+	}
+
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		// TODO: Add test cases.
+		{"No check test", args{body: goodBody, checkString: ""}, true},
+		{"Valid check test", args{body: goodBody, checkString: "yandex"}, true},
+		{"Wrong check test", args{body: wrongBody, checkString: "yandex"}, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := testResponseBody(tt.args.body, tt.args.checkString); got != tt.want {
+				t.Errorf("testResponseBody() = %v, want %v", got, tt.want)
 			}
 		})
 	}
