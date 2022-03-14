@@ -42,6 +42,7 @@ type HttpTesterConfig struct {
 	Method        string            `yaml:"method"`
 	SuccessStatus int               `yaml:"success_status"`
 	Headers       map[string]string `yaml:"headers"`
+	CheckText     string            `yaml:"check_text,omitempty"`
 }
 
 type CertificateTesterConfig struct {

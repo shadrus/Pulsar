@@ -3,15 +3,16 @@ log_level: "debug"
 certificate_config:
   - target:
       endpoint: "ya.ru"
-      interval: 10
+      interval: 60
       timeout: 30
     days_for_warn: 3    
 http_config:
   - target:
-      endpoint: "https://yandex.ru"
-      interval: 10
+      endpoint: "https://ya.ru"
+      interval: 60
       timeout: 30
     headers:
       Awasome-Header: something
     method: GET
     success_status: 200
+    check_text: "yandex"
