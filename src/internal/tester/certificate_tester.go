@@ -49,7 +49,7 @@ func (h CertificateTester) Validate() error {
 	return h.validateEndpoint()
 }
 
-func (h CertificateTester) Test() (TestResult, error) {
+func (h CertificateTester) testCert() (TestResult, error) {
 	testResult := CertificateTestResult{Configuration: h.config, Success: false}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(h.config.GetTimeout())*time.Second)
 	defer cancel()
@@ -59,7 +59,6 @@ func (h CertificateTester) Test() (TestResult, error) {
 	conn, err := d.DialContext(ctx, "tcp", fmt.Sprintf("%s:443", h.config.GetEndpoint()))
 	if err != nil {
 		log.Warning(err)
-		h.resultsChannel <- testResult
 		return testResult, err
 	}
 	defer conn.Close()
@@ -67,17 +66,20 @@ func (h CertificateTester) Test() (TestResult, error) {
 	err = tlsConn.VerifyHostname(h.config.GetEndpoint())
 	if err != nil {
 		log.Warning(err)
-		h.resultsChannel <- testResult
 		return testResult, err
 	}
 	expiry := tlsConn.ConnectionState().PeerCertificates[0].NotAfter
 	timeDiff := time.Until(expiry)
-	daysToExpire := timeDiff.Hours() / 24
-	testResult.DaysToExpire = daysToExpire
-	if int(daysToExpire) > h.config.DaysForWarn {
+	testResult.DaysToExpire = timeDiff.Hours() / 24
+	if int(testResult.DaysToExpire) > h.config.DaysForWarn {
 		testResult.Success = true
 	}
 	log.Debug(expiry)
-	h.resultsChannel <- testResult
 	return testResult, nil
+}
+
+func (h CertificateTester) Test() (TestResult, error) {
+	testResult, err := h.testCert()
+	h.resultsChannel <- testResult
+	return testResult, err
 }

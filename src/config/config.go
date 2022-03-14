@@ -4,7 +4,6 @@ import (
 	"io/ioutil"
 	"log"
 
-	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 )
 
@@ -18,14 +17,6 @@ type Config struct {
 	LogLevel          string                    `yaml:"log_level"`
 	HttpConfig        []HttpTesterConfig        `yaml:"http_config"`
 	CertificateConfig []CertificateTesterConfig `yaml:"certificate_config"`
-}
-
-func (c Config) GetLogLevel() logrus.Level {
-	level, err := logrus.ParseLevel(c.LogLevel)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return level
 }
 
 type CommonConfig struct {
