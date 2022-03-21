@@ -1,4 +1,4 @@
-# **Pulstar is a tool to ship network checks to Prometheus.**
+# **Pulsar is a tool to ship network checks to Prometheus.**
 
 
 The pulsar is network testing tool. For now it can perfrom checks:
