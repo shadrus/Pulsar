@@ -23,7 +23,11 @@ pulsar_days_to_expire_cert | Days for site tls certificate expire.
 
 All metrics also have label `success` that can be configured
 
-## Configuration example
+## Configuration
+
+Tool can be configured through config.yml file. It must be placed at the same dir with app.
+
+### Configuration example
 
 ```
 ---
