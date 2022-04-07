@@ -28,8 +28,10 @@ jobs:
         binary_name: "pulsar"
         extra_files: LICENSE README.md
   docker-build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest    
     steps:
+      - name: Get the tag name
+        run: echo "TAG=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_ENV
       -
         name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -49,4 +51,4 @@ jobs:
           context: .
           file: ./build/Dockerfile
           push: true
-          tags: shadrus/pulsar:latest,shadrus/pulsar:${{github.ref}}
+          tags: shadrus/pulsar:latest,shadrus/pulsar:${{ env.TAG }}
