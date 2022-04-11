@@ -19,9 +19,8 @@ All check results are available as Prometheus metrics on endpoint `/metrics`.
 Name  | Description
 --- | ---
 pulsar_http_request_seconds | Time to get response from the endpoint in seconds.
-pulsar_days_to_expire_cert | Days for site tls certificate expire.
-
-All metrics also have label `success` that can be configured
+pulsar_cert_not_after | The date after which a peer certificate expires. Expressed as a Unix Epoch Time.
+pulsar_cert_not_before | The date before which a peer certificate is not valid. Expressed as a Unix Epoch Time.
 
 ## Configuration
 
@@ -37,7 +36,6 @@ certificate_config:
       endpoint: "ya.ru"
       interval: 60
       timeout: 30
-    days_for_warn: 3    
 http_config:
   - target:
       endpoint: "https://ya.ru"
@@ -53,8 +51,6 @@ http_config:
 sections:
 
 `certificate_config`: 
-
-**days_to_warn** - success label will be set to false if days to certificate expire ale less than in config
 
 **target.endpoint** - must be without protocol
 
