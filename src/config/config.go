@@ -47,7 +47,6 @@ type HttpTesterConfig struct {
 
 type CertificateTesterConfig struct {
 	CommonConfig `yaml:"target"`
-	DaysForWarn  int `yaml:"days_for_warn"`
 }
 
 func LoadConfiguration(filePath string) *Config {
