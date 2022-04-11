@@ -5,7 +5,6 @@ certificate_config:
       endpoint: "ya.ru"
       interval: 60
       timeout: 30
-    days_for_warn: 3    
 http_config:
   - target:
       endpoint: "https://ya.ru"

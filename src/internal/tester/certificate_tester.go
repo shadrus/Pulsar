@@ -3,8 +3,10 @@ package tester
 import (
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"net/url"
+	"strings"
 	"tester/src/config"
 	"time"
 
@@ -12,17 +14,41 @@ import (
 )
 
 type CertificateTestResult struct {
-	Success       bool
-	DaysToExpire  float64
+	Endpoint      string
 	Configuration config.Configurator
-}
-
-func (r CertificateTestResult) WasSuccessful() bool {
-	return r.Success
+	cert          *x509.Certificate
+	CertNotAfter  float64
+	CertNotBefore float64
 }
 
 func (r CertificateTestResult) GetConfig() config.Configurator {
 	return r.Configuration
+}
+
+func (h CertificateTestResult) PrepareLabels() map[string]string {
+	expectedLabels := map[string]string{"endpoint": h.Endpoint}
+	if h.cert == nil {
+		expectedLabels = map[string]string{
+			"endpoint":  h.Endpoint,
+			"serial_no": "",
+			"issuer_cn": "",
+			"o":         "",
+			"cn":        "",
+			"ou":        "",
+		}
+	} else {
+		expectedLabels = map[string]string{
+			"endpoint":  h.Endpoint,
+			"serial_no": h.cert.SerialNumber.String(),
+			"issuer_cn": h.cert.Issuer.CommonName,
+			"o":         strings.Join(h.cert.Issuer.Organization, ","),
+			"cn":        h.cert.Subject.CommonName,
+			"ou":        strings.Join(h.cert.Subject.OrganizationalUnit, ","),
+		}
+	}
+
+	return expectedLabels
+
 }
 
 type CertificateTester struct {
@@ -50,7 +76,7 @@ func (h CertificateTester) Validate() error {
 }
 
 func (h CertificateTester) testCert() (TestResult, error) {
-	testResult := CertificateTestResult{Configuration: h.config, Success: false}
+	testResult := CertificateTestResult{Configuration: h.config, Endpoint: h.config.GetEndpoint()}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(h.config.GetTimeout())*time.Second)
 	defer cancel()
 	d := tls.Dialer{
@@ -68,13 +94,9 @@ func (h CertificateTester) testCert() (TestResult, error) {
 		log.Warning(err)
 		return testResult, err
 	}
-	expiry := tlsConn.ConnectionState().PeerCertificates[0].NotAfter
-	timeDiff := time.Until(expiry)
-	testResult.DaysToExpire = timeDiff.Hours() / 24
-	if int(testResult.DaysToExpire) > h.config.DaysForWarn {
-		testResult.Success = true
-	}
-	log.Debug(expiry)
+	testResult.cert = tlsConn.ConnectionState().PeerCertificates[0]
+	testResult.CertNotAfter = float64(tlsConn.ConnectionState().PeerCertificates[0].NotAfter.Unix())
+	testResult.CertNotBefore = float64(tlsConn.ConnectionState().PeerCertificates[0].NotBefore.Unix())
 	return testResult, nil
 }
 

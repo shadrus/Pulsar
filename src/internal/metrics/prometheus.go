@@ -3,11 +3,11 @@ package metrics
 
 import (
 	"net/http"
-	"strconv"
 	"tester/src/config"
 	"tester/src/internal/tester"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 )
@@ -24,23 +24,39 @@ var (
 	)
 	// httpTest is Gauge type metric.
 	// It provides info from certificate validity test.
-	certTest = prometheus.NewGaugeVec(
+	certTestNotAfter = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Name: "pulsar_days_to_expire_cert",
-			Help: "Day left to expire certificate",
+			Name: "pulsar_cert_not_after",
+			Help: "The date after which a peer certificate expires. Expressed as a Unix Epoch Time.",
 		},
-		[]string{"endpoint", "success"},
+		[]string{"endpoint", "serial_no", "issuer_cn", "cn", "o", "ou"},
+	)
+
+	certTestNotBefore = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "pulsar_cert_not_before",
+			Help: "The date before which a peer certificate is not valid. Expressed as a Unix Epoch Time.",
+		},
+		[]string{"endpoint", "serial_no", "issuer_cn", "cn", "o", "ou"},
 	)
 )
 
-func serveHttpTestResults(conf config.HttpTesterConfig, result tester.TestResult) {
-	httpResult := result.(tester.HttpTestResult)
-	httpTest.WithLabelValues(conf.Endpoint, strconv.FormatBool(result.WasSuccessful()), strconv.Itoa(httpResult.ResponseStatus)).Observe(httpResult.TestDuration.Seconds())
+func mapToArray(labels map[string]string) []string {
+	v := make([]string, 0, len(labels))
+	for _, value := range labels {
+		v = append(v, value)
+	}
+	return v
 }
 
-func serveCertificateTestResults(conf config.CertificateTesterConfig, result tester.TestResult) {
-	certificateTestResult := result.(tester.CertificateTestResult)
-	certTest.WithLabelValues(conf.Endpoint, strconv.FormatBool(result.WasSuccessful())).Set(certificateTestResult.DaysToExpire)
+func serveHttpTestResults(conf config.HttpTesterConfig, result tester.HttpTestResult) {
+	httpTest.WithLabelValues(mapToArray(result.PrepareLabels())...).Observe(result.TestDuration.Seconds())
+}
+
+func serveCertificateTestResults(conf config.CertificateTesterConfig, result tester.CertificateTestResult) {
+	labels := result.PrepareLabels()
+	certTestNotAfter.WithLabelValues(labels["endpoint"], labels["serial_no"], labels["issuer_cn"], labels["cn"], labels["o"], labels["ou"]).Set(result.CertNotAfter)
+	certTestNotBefore.WithLabelValues(labels["endpoint"], labels["serial_no"], labels["issuer_cn"], labels["cn"], labels["o"], labels["ou"]).Set(result.CertNotBefore)
 }
 
 // serveTestResults decides what metric must be updates based on test configuration
@@ -49,9 +65,9 @@ func serveTestResults(resultsChannel <-chan tester.TestResult) {
 		log.Debugf("Got results %v", result)
 		switch conf := result.GetConfig().(type) {
 		case config.HttpTesterConfig:
-			serveHttpTestResults(conf, result)
+			serveHttpTestResults(conf, result.(tester.HttpTestResult))
 		case config.CertificateTesterConfig:
-			serveCertificateTestResults(conf, result)
+			serveCertificateTestResults(conf, result.(tester.CertificateTestResult))
 		default:
 			log.Error("unknown tester type")
 		}
@@ -62,7 +78,9 @@ func serveTestResults(resultsChannel <-chan tester.TestResult) {
 // StartPrometheus creates job for gather test results and exposes metrics endpoint
 func StartPrometheus(resultsChannel <-chan tester.TestResult) {
 	prometheus.MustRegister(httpTest)
-	prometheus.MustRegister(certTest)
+	prometheus.MustRegister(certTestNotAfter)
+	prometheus.MustRegister(certTestNotBefore)
+	prometheus.Unregister(collectors.NewGoCollector())
 	http.Handle("/metrics", promhttp.HandlerFor(
 		prometheus.DefaultGatherer,
 		promhttp.HandlerOpts{

@@ -13,8 +13,8 @@ type Tester interface {
 }
 
 type TestResult interface {
-	WasSuccessful() bool
 	GetConfig() config.Configurator
+	PrepareLabels() map[string]string
 }
 
 func NewTester(configuration config.Configurator, resultsChannel chan TestResult) (Tester, error) {

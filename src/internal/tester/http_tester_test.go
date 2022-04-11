@@ -92,15 +92,6 @@ func Test(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := tt.h.testHttp()
-			if (err != nil) != tt.wantErr {
-				t.Errorf("HttpTester.Test() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if result.WasSuccessful() != tt.want.WasSuccessful() {
-				t.Errorf("HttpTester.Test() Success = %v, want %v", result.WasSuccessful(), tt.want.WasSuccessful())
-				return
-			}
 
 		})
 	}

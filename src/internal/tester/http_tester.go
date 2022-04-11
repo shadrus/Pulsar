@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"tester/src/config"
 	"time"
@@ -21,6 +22,16 @@ type HttpTestResult struct {
 	TestDuration   time.Duration
 	Configuration  config.Configurator
 	ResponseStatus int
+}
+
+func (h HttpTestResult) PrepareLabels() map[string]string {
+	//"endpoint", "success", "status"
+	expectedLabels := map[string]string{
+		"endpoint": h.Configuration.GetEndpoint(),
+		"success":  strconv.FormatBool(h.Success),
+		"status":   strconv.Itoa(h.ResponseStatus)}
+	return expectedLabels
+
 }
 
 func (r HttpTestResult) WasSuccessful() bool {
